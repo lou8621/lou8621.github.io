@@ -338,10 +338,10 @@
   </div>
 
   <script>
-    // Add click animation to buttons
+    // Add click animation to buttons without preventing redirection
     document.querySelectorAll('.grid-button').forEach(button => {
       button.addEventListener('click', function(e) {
-        e.preventDefault();
+        // Add animation class
         this.classList.add('clicked');
         
         // Remove the class after animation completes
@@ -349,9 +349,7 @@
           this.classList.remove('clicked');
         }, 300);
         
-        // In a real scenario, you would navigate to the link
-        // For this example, we'll just show an alert
-        alert(`Navigating to: ${this.getAttribute('href')}`);
+        // Note: We're NOT calling e.preventDefault() so the link will work normally
       });
     });
 
@@ -365,6 +363,3 @@
   </script>
 </body>
 </html>
-
-
-
