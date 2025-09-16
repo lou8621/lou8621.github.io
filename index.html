@@ -9,15 +9,16 @@
 <body>
     <div class="app-container">
         <header>
-            <h1>Our Document Library</h1>
-            <p>Click on a file to view its content or download it.</p>
+            <h1>Text File Directory</h1>
+            <p>Browse, view, and download text files. Click on a file to view its content or download it.</p>
             <div class="search-box">
-                <input type="text" id="searchInput" placeholder="Search files..." oninput="filterFiles()">
+                <input type="text" id="searchInput" placeholder="Search files by name or content..." oninput="filterFiles()">
+                <button onclick="filterFiles()">🔍 Search</button>
             </div>
         </header>
 
         <div id="loading">Loading files...</div>
-        <div id="error" class="hidden">Failed to load data. Please check the connection.</div>
+        <div id="error" class="hidden">Failed to load data. Please check your connection and try again.</div>
         
         <table id="filesTable" class="hidden">
             <thead>
@@ -25,11 +26,11 @@
                     <th>File Name</th>
                     <th>Description</th>
                     <th>Last Updated</th>
-                    <th>Action</th>
+                    <th>Actions</th>
                 </tr>
             </thead>
             <tbody id="fileList">
-                <!-- Data will be inserted here by JavaScript -->
+                <!-- Files will be dynamically inserted here -->
             </tbody>
         </table>
     </div>
@@ -38,12 +39,187 @@
     <div id="viewModal" class="modal">
         <div class="modal-content">
             <span class="close" onclick="closeModal()">&times;</span>
-            <h2 id="modalTitle"></h2>
+            <h2 id="modalTitle">File Content</h2>
             <pre id="modalContent"></pre>
-            <button id="modalDownloadBtn">Download</button>
+            <div class="modal-actions">
+                <button id="modalDownloadBtn">Download File</button>
+                <button onclick="closeModal()">Close</button>
+            </div>
         </div>
     </div>
 
-    <script src="app.js"></script>
+    <script>
+        // CONFIGURATION: Replace with your published Google Sheets CSV URL
+        const SHEET_CSV_URL = 'https://docs.google.com/spreadsheets/d/e/YOUR_SHEET_ID/pub?output=csv';
+
+        let allFiles = [];
+        let currentModalFile = null;
+
+        // Load data when the page starts
+        document.addEventListener('DOMContentLoaded', loadSheetData);
+
+        async function loadSheetData() {
+            showLoading(true);
+            hideError();
+
+            try {
+                const response = await fetch(SHEET_CSV_URL);
+                if (!response.ok) throw new Error('Network response was not ok');
+                
+                const csvData = await response.text();
+                allFiles = parseCsv(csvData);
+                
+                if (allFiles.length === 0) {
+                    showError('No files found in the directory.');
+                } else {
+                    renderFileList(allFiles);
+                    document.getElementById('filesTable').classList.remove('hidden');
+                }
+                
+                showLoading(false);
+            } catch (error) {
+                console.error("Error loading sheet data:", error);
+                showLoading(false);
+                showError('Failed to load files. Please check the sheet URL and try again.');
+            }
+        }
+
+        function parseCsv(csv) {
+            const lines = csv.split('\n').filter(line => line.trim());
+            if (lines.length < 2) return [];
+
+            const headers = lines[0].split(',').map(h => h.trim().replace(/"/g, ''));
+            const result = [];
+
+            for (let i = 1; i < lines.length; i++) {
+                const obj = {};
+                // Simple CSV parsing - for more complex data, consider a library like PapaParse
+                const currentline = lines[i].split(',').map(field => field.trim().replace(/^"|"$/g, ''));
+
+                for (let j = 0; j < headers.length; j++) {
+                    obj[headers[j]] = currentline[j] || '';
+                }
+                
+                if (obj.FileName && obj.FileName.trim()) {
+                    result.push(obj);
+                }
+            }
+            return result;
+        }
+
+        function renderFileList(files) {
+            const tbody = document.getElementById('fileList');
+            tbody.innerHTML = '';
+
+            if (files.length === 0) {
+                tbody.innerHTML = '<tr><td colspan="4" style="text-align: center; padding: 20px; color: var(--text-light);">No files found matching your search.</td></tr>';
+                return;
+            }
+
+            files.forEach(file => {
+                const tr = document.createElement('tr');
+                tr.innerHTML = `
+                    <td><strong>${escapeHtml(file.FileName)}</strong></td>
+                    <td>${escapeHtml(file.Description || 'No description')}</td>
+                    <td>${escapeHtml(file.LastUpdated || 'Unknown')}</td>
+                    <td>
+                        <button onclick="viewFile('${escapeSingleQuotes(file.FileName)}', \`${escapeForTemplateLiteral(file.Content || '')}\`)">View</button>
+                        <button onclick="downloadFile('${escapeSingleQuotes(file.FileName)}', \`${escapeForTemplateLiteral(file.Content || '')}\`)">Download</button>
+                    </td>
+                `;
+                tbody.appendChild(tr);
+            });
+        }
+
+        function viewFile(name, content) {
+            currentModalFile = { name, content };
+            document.getElementById('modalTitle').textContent = name;
+            document.getElementById('modalContent').textContent = content;
+            
+            const downloadBtn = document.getElementById('modalDownloadBtn');
+            downloadBtn.onclick = () => downloadFile(name, content);
+            
+            document.getElementById('viewModal').style.display = 'block';
+        }
+
+        function downloadFile(name, content) {
+            const blob = new Blob([content], { type: 'text/plain' });
+            const url = window.URL.createObjectURL(blob);
+            const a = document.createElement('a');
+            a.href = url;
+            a.download = name.endsWith('.txt') ? name : name + '.txt';
+            document.body.appendChild(a);
+            a.click();
+            window.URL.revokeObjectURL(url);
+            document.body.removeChild(a);
+        }
+
+        function filterFiles() {
+            const query = document.getElementById('searchInput').value.toLowerCase().trim();
+            
+            if (!query) {
+                renderFileList(allFiles);
+                return;
+            }
+
+            const filteredFiles = allFiles.filter(file =>
+                file.FileName.toLowerCase().includes(query) ||
+                (file.Description && file.Description.toLowerCase().includes(query)) ||
+                (file.Content && file.Content.toLowerCase().includes(query))
+            );
+            
+            renderFileList(filteredFiles);
+        }
+
+        function closeModal() {
+            document.getElementById('viewModal').style.display = 'none';
+            currentModalFile = null;
+        }
+
+        // Close modal when clicking outside content
+        window.onclick = function(event) {
+            const modal = document.getElementById('viewModal');
+            if (event.target === modal) {
+                closeModal();
+            }
+        }
+
+        // Utility functions
+        function escapeHtml(text) {
+            const div = document.createElement('div');
+            div.textContent = text;
+            return div.innerHTML;
+        }
+
+        function escapeSingleQuotes(text) {
+            return text.replace(/'/g, "\\'");
+        }
+
+        function escapeForTemplateLiteral(text) {
+            return text.replace(/`/g, '\\`').replace(/\$/g, '\\$');
+        }
+
+        function showLoading(show) {
+            document.getElementById('loading').style.display = show ? 'block' : 'none';
+        }
+
+        function showError(message = 'An error occurred.') {
+            const errorDiv = document.getElementById('error');
+            errorDiv.textContent = message;
+            errorDiv.classList.remove('hidden');
+        }
+
+        function hideError() {
+            document.getElementById('error').classList.add('hidden');
+        }
+
+        // Optional: Add keyboard shortcut for search (Ctrl/Cmd + F)
+        document.addEventListener('keydown', function(e) {
+            if ((e.ctrlKey || e.metaKey) && e.key === 'f') {
+                e.preventDefault();
+                document.getElementById('searchInput').focus();
+            }
+        });
+    </script>
 </body>
 </html>
