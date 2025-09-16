@@ -9,43 +9,38 @@
 <body>
     <div class="app-container">
         <header>
-            <h1>My Text Files</h1>
+            <h1>Our Document Library</h1>
+            <p>Click on a file to view its content or download it.</p>
             <div class="search-box">
-                <input type="text" id="searchInput" placeholder="Search files...">
-                <button onclick="searchFiles()">🔍</button>
+                <input type="text" id="searchInput" placeholder="Search files..." oninput="filterFiles()">
             </div>
         </header>
 
-        <table id="filesTable">
+        <div id="loading">Loading files...</div>
+        <div id="error" class="hidden">Failed to load data. Please check the connection.</div>
+        
+        <table id="filesTable" class="hidden">
             <thead>
                 <tr>
-                    <th>Name</th>
-                    <th>Last Modified</th>
-                    <th>Actions</th>
+                    <th>File Name</th>
+                    <th>Description</th>
+                    <th>Last Updated</th>
+                    <th>Action</th>
                 </tr>
             </thead>
             <tbody id="fileList">
-                <!-- Files will be dynamically inserted here by JavaScript -->
-                <tr>
-                    <td colspan="3">Loading files...</td>
-                </tr>
+                <!-- Data will be inserted here by JavaScript -->
             </tbody>
         </table>
-        <button onclick="createNewFile()">+ Add New File</button>
-
-        <!-- Status Bar -->
-        <div id="statusBar"></div>
     </div>
 
-    <!-- The Modal for Editing Content -->
-    <div id="editModal" class="modal">
+    <!-- Modal for viewing content -->
+    <div id="viewModal" class="modal">
         <div class="modal-content">
-            <h2>Edit File: <span id="editingFileName"></span></h2>
-            <textarea id="fileContentEditor" rows="20" cols="80"></textarea>
-            <div class="modal-actions">
-                <button onclick="saveFileContent()">Save Changes</button>
-                <button onclick="closeModal()">Cancel</button>
-            </div>
+            <span class="close" onclick="closeModal()">&times;</span>
+            <h2 id="modalTitle"></h2>
+            <pre id="modalContent"></pre>
+            <button id="modalDownloadBtn">Download</button>
         </div>
     </div>
 
