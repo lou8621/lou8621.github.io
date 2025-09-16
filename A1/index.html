@@ -1,0 +1,372 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>TOUCH ME</title>
+  <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
+  <style>
+    * {
+      margin: 0;
+      padding: 0;
+      box-sizing: border-box;
+    }
+
+    body {
+      font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
+      margin: 0;
+      padding: 20px;
+      display: flex;
+      flex-direction: column;
+      align-items: center;
+      justify-content: center;
+      min-height: 100vh;
+      background: linear-gradient(135deg, #1a2a6c, #b21f1f, #fdbb2d);
+      background-size: 400% 400%;
+      animation: gradientBG 15s ease infinite;
+      color: white;
+      overflow-x: hidden;
+    }
+
+    @keyframes gradientBG {
+      0% { background-position: 0% 50%; }
+      50% { background-position: 100% 50%; }
+      100% { background-position: 0% 50%; }
+    }
+
+    .container {
+      width: 100%;
+      max-width: 1000px;
+      text-align: center;
+    }
+
+    .header {
+      margin-bottom: 30px;
+      position: relative;
+    }
+
+    .header h1 {
+      font-size: 4rem;
+      text-transform: uppercase;
+      letter-spacing: 3px;
+      margin-bottom: 10px;
+      text-shadow: 3px 3px 0 #000, 6px 6px 0 rgba(0,0,0,0.2);
+      color: #AFA3D4;
+    }
+
+    .header p {
+      font-size: 1.2rem;
+      opacity: 0.9;
+      max-width: 600px;
+      margin: 0 auto;
+    }
+
+    .button-grid {
+      display: grid;
+      grid-template-columns: repeat(auto-fit, minmax(150px, 1fr));
+      gap: 20px;
+      width: 100%;
+      margin-bottom: 40px;
+    }
+
+    .grid-button {
+      display: flex;
+      flex-direction: column;
+      align-items: center;
+      justify-content: center;
+      padding: 20px 15px;
+      text-align: center;
+      text-decoration: none;
+      color: white;
+      background: rgba(0, 123, 255, 0.8);
+      border-radius: 12px;
+      transition: all 0.3s ease;
+      font-weight: bold;
+      box-shadow: 0 5px 15px rgba(0, 0, 0, 0.2);
+      position: relative;
+      overflow: hidden;
+      border: 2px solid transparent;
+    }
+
+    .grid-button:before {
+      content: '';
+      position: absolute;
+      top: 0;
+      left: 0;
+      width: 100%;
+      height: 100%;
+      background: linear-gradient(45deg, rgba(255,255,255,0.1), rgba(255,255,255,0.05));
+      z-index: 1;
+      transition: all 0.3s ease;
+      opacity: 0;
+    }
+
+    .grid-button:hover {
+      background: rgba(194, 212, 157, 0.9);
+      transform: translateY(-5px) scale(1.03);
+      box-shadow: 0 10px 25px rgba(0, 0, 0, 0.3);
+      color: #333;
+      border-color: rgba(255, 255, 255, 0.5);
+    }
+
+    .grid-button:hover:before {
+      opacity: 1;
+    }
+
+    .grid-button:active {
+      transform: translateY(2px) scale(0.98);
+      box-shadow: 0 2px 10px rgba(0, 0, 0, 0.2);
+    }
+
+    .button-icon {
+      font-size: 1.8rem;
+      margin-bottom: 10px;
+      transition: transform 0.3s ease;
+    }
+
+    .grid-button:hover .button-icon {
+      transform: scale(1.2) rotate(5deg);
+    }
+
+    .button-number {
+      position: absolute;
+      top: 8px;
+      right: 8px;
+      font-size: 0.8rem;
+      opacity: 0.7;
+    }
+
+    .footer {
+      margin-top: 30px;
+      padding: 15px;
+      border-top: 1px solid rgba(255, 255, 255, 0.2);
+      width: 100%;
+      text-align: center;
+      font-size: 0.9rem;
+      opacity: 0.8;
+    }
+
+    .easter-egg {
+      cursor: pointer;
+      padding: 5px 10px;
+      border-radius: 5px;
+      background: rgba(255, 255, 255, 0.1);
+      transition: all 0.3s ease;
+    }
+
+    .easter-egg:hover {
+      background: rgba(255, 255, 255, 0.2);
+    }
+
+    /* Responsive adjustments */
+    @media (max-width: 768px) {
+      .header h1 {
+        font-size: 2.5rem;
+      }
+      
+      .button-grid {
+        grid-template-columns: repeat(auto-fit, minmax(130px, 1fr));
+        gap: 15px;
+      }
+    }
+
+    @media (max-width: 480px) {
+      body {
+        padding: 15px;
+      }
+      
+      .header h1 {
+        font-size: 2rem;
+      }
+      
+      .button-grid {
+        grid-template-columns: repeat(2, 1fr);
+        gap: 12px;
+      }
+      
+      .grid-button {
+        padding: 15px 10px;
+        font-size: 0.9rem;
+      }
+    }
+
+    /* Animation for click effect */
+    @keyframes clickEffect {
+      0% { transform: scale(1); }
+      50% { transform: scale(0.95); }
+      100% { transform: scale(1); }
+    }
+
+    .clicked {
+      animation: clickEffect 0.3s ease;
+    }
+  </style>
+</head>
+<body>
+  <div class="container">
+    <div class="header">
+      <h1>ALT F4</h1>
+      <p>Select your destination - but be careful where you click!</p>
+    </div>
+
+    <div class="button-grid">
+      <a href="https://youtu.be/ne_OjT4y6e0?list=RDne_OjT4y6e0" class="grid-button">
+        <div class="button-icon"><i class="fas fa-play-circle"></i></div>
+        Page 1
+        <span class="button-number">1</span>
+      </a>
+      <a href="papaoommowmow.html" class="grid-button">
+        <div class="button-icon"><i class="fas fa-gamepad"></i></div>
+        Page 2
+        <span class="button-number">2</span>
+      </a>
+      <a href="page3.html" class="grid-button">
+        <div class="button-icon"><i class="fas fa-dice"></i></div>
+        Page 3
+        <span class="button-number">3</span>
+      </a>
+      <a href="MAIN.HTML" class="grid-button">
+        <div class="button-icon"><i class="fas fa-puzzle-piece"></i></div>
+        Page 4
+        <span class="button-number">4</span>
+      </a>
+      <a href="page5.html" class="grid-button">
+        <div class="button-icon"><i class="fas fa-chess"></i></div>
+        Page 5
+        <span class="button-number">5</span>
+      </a>
+      <a href="page6.html" class="grid-button">
+        <div class="button-icon"><i class="fas fa-dragon"></i></div>
+        Page 6
+        <span class="button-number">6</span>
+      </a>
+      <a href="page7.html" class="grid-button">
+        <div class="button-icon"><i class="fas fa-hat-wizard"></i></div>
+        Page 7
+        <span class="button-number">7</span>
+      </a>
+      <a href="page8.html" class="grid-button">
+        <div class="button-icon"><i class="fas fa-scroll"></i></div>
+        Page 8
+        <span class="button-number">8</span>
+      </a>
+      <a href="page9.html" class="grid-button">
+        <div class="button-icon"><i class="fas fa-gem"></i></div>
+        Page 9
+        <span class="button-number">9</span>
+      </a>
+      <a href="page10.html" class="grid-button">
+        <div class="button-icon"><i class="fas fa-crown"></i></div>
+        Page 10
+        <span class="button-number">10</span>
+      </a>
+      <a href="page11.html" class="grid-button">
+        <div class="button-icon"><i class="fas fa-key"></i></div>
+        Page 11
+        <span class="button-number">11</span>
+      </a>
+      <a href="page12.html" class="grid-button">
+        <div class="button-icon"><i class="fas fa-shield-alt"></i></div>
+        Page 12
+        <span class="button-number">12</span>
+      </a>
+      <a href="page13.html" class="grid-button">
+        <div class="button-icon"><i class="fas fa-skull"></i></div>
+        Page 13
+        <span class="button-number">13</span>
+      </a>
+      <a href="page14.html" class="grid-button">
+        <div class="button-icon"><i class="fas fa-treasure-chest"></i></div>
+        Page 14
+        <span class="button-number">14</span>
+      </a>
+      <a href="page15.html" class="grid-button">
+        <div class="button-icon"><i class="fas fa-map"></i></div>
+        Page 15
+        <span class="button-number">15</span>
+      </a>
+      <a href="page16.html" class="grid-button">
+        <div class="button-icon"><i class="fas fa-mountain"></i></div>
+        Page 16
+        <span class="button-number">16</span>
+      </a>
+      <a href="page17.html" class="grid-button">
+        <div class="button-icon"><i class="fas fa-ring"></i></div>
+        Page 17
+        <span class="button-number">17</span>
+      </a>
+      <a href="page18.html" class="grid-button">
+        <div class="button-icon"><i class="fas fa-fire"></i></div>
+        Page 18
+        <span class="button-number">18</span>
+      </a>
+      <a href="page19.html" class="grid-button">
+        <div class="button-icon"><i class="fas fa-cloud"></i></div>
+        Page 19
+        <span class="button-number">19</span>
+      </a>
+      <a href="page20.html" class="grid-button">
+        <div class="button-icon"><i class="fas fa-bolt"></i></div>
+        Page 20
+        <span class="button-number">20</span>
+      </a>
+      <a href="page21.html" class="grid-button">
+        <div class="button-icon"><i class="fas fa-water"></i></div>
+        Page 21
+        <span class="button-number">21</span>
+      </a>
+      <a href="page22.html" class="grid-button">
+        <div class="button-icon"><i class="fas fa-tree"></i></div>
+        Page 22
+        <span class="button-number">22</span>
+      </a>
+      <a href="page23.html" class="grid-button">
+        <div class="button-icon"><i class="fas fa-moon"></i></div>
+        Page 23
+        <span class="button-number">23</span>
+      </a>
+      <a href="page24.html" class="grid-button">
+        <div class="button-icon"><i class="fas fa-ban"></i></div>
+        SEE NO MORE
+        <span class="button-number">24</span>
+      </a>
+    </div>
+
+    <div class="footer">
+      <p>Game Portal &copy; 2023 | <span class="easter-egg" onclick="alert('Easter egg! You found the Lucrative June June.')">Hint: Try ALT+F4</span></p>
+    </div>
+  </div>
+
+  <script>
+    // Add click animation to buttons without preventing redirection
+    document.querySelectorAll('.grid-button').forEach(button => {
+      button.addEventListener('click', function(e) {
+        // Add animation class
+        this.classList.add('clicked');
+        
+        // Remove the class after animation completes
+        setTimeout(() => {
+          this.classList.remove('clicked');
+        }, 300);
+        
+        // Note: We're NOT calling e.preventDefault() so the link will work normally
+      });
+    });
+
+    // Add keyboard shortcut for ALT+F4
+    document.addEventListener('keydown', function(e) {
+      if (e.key === 'F4' && e.altKey) {
+        e.preventDefault();
+        alert('Just kidding! This is not a real game. 😄');
+      }
+    });
+  </script>
+</body>
+</html>
+
+
+
+
+
+
+
