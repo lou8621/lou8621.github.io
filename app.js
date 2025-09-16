@@ -1,107 +1,129 @@
-let allFiles = [];
-let currentlyEditingFileId = null;
+// CONFIG: Paste your published Google Sheets CSV link here
+const SHEET_CSV_URL = 'https://docs.google.com/spreadsheets/d/e/YOUR_SHEET_ID/pub?output=csv';
 
-// This function would be called when the page loads
-async function loadFiles() {
-    showStatus('Loading...', 'saving');
+let allFiles = []; // This will hold all our data
+let currentModalFile = null; // Track which file is being viewed
+
+// Fetch and parse the data from the published Sheet
+async function loadSheetData() {
+    showLoading(true);
+    hideError();
+
     try {
-        // 1. Call YOUR backend endpoint, e.g., GET /list-files
-        const response = await fetch('http://your-backend.com/list-files');
-        allFiles = await response.json(); // Assume this returns an array of file objects with {id, name, modifiedTime}
-
-        // 2. Render the table
+        const response = await fetch(SHEET_CSV_URL);
+        const csvData = await response.text();
+        allFiles = parseCsv(csvData);
         renderFileList(allFiles);
-        showStatus('Files loaded.', 'saved');
-        setTimeout(() => hideStatus(), 2000);
+        showLoading(false);
     } catch (error) {
-        console.error("Error loading files:", error);
-        showStatus('Failed to load files.', 'error');
+        console.error("Error loading sheet data:", error);
+        showLoading(false);
+        showError();
     }
+}
+
+// A simple CSV parser (for well-formatted data)
+function parseCsv(csv) {
+    const lines = csv.split('\n');
+    const headers = lines[0].split(',').map(h => h.trim().replace(/"/g, ''));
+
+    const result = [];
+    for (let i = 1; i < lines.length; i++) {
+        const obj = {};
+        const currentline = lines[i].split(/,(?=(?:(?:[^"]*"){2})*[^"]*$)/); // Regex to handle commas in content
+
+        for (let j = 0; j < headers.length; j++) {
+            // Clean up the value: remove quotes and trim whitespace
+            let value = currentline[j] ? currentline[j].trim().replace(/^"|"$/g, '') : '';
+            obj[headers[j]] = value;
+        }
+        if (obj.FileName) { // Only add rows with a filename
+            result.push(obj);
+        }
+    }
+    return result;
 }
 
 function renderFileList(files) {
     const tbody = document.getElementById('fileList');
-    tbody.innerHTML = ''; // Clear loading message
+    tbody.innerHTML = '';
+
+    if (files.length === 0) {
+        tbody.innerHTML = '<tr><td colspan="4">No files found.</td></tr>';
+        return;
+    }
 
     files.forEach(file => {
         const tr = document.createElement('tr');
         tr.innerHTML = `
-            <td>📄 ${file.name}</td>
-            <td>${new Date(file.modifiedTime).toLocaleDateString()}</td>
+            <td>${file.FileName}</td>
+            <td>${file.Description || '-'}</td>
+            <td>${file.LastUpdated || '-'}</td>
             <td>
-                <button onclick="startEditName('${file.id}', '${file.name}')">Rename</button>
-                <button onclick="startEditContent('${file.id}')">Edit Content</button>
+                <button onclick="viewFile('${file.FileName}', \`${escapeQuotes(file.Content)}\`)">View</button>
+                <button onclick="downloadFile('${file.FileName}', \`${escapeQuotes(file.Content)}\`)">Download</button>
             </td>
         `;
         tbody.appendChild(tr);
     });
+
+    document.getElementById('filesTable').classList.remove('hidden');
 }
 
-function searchFiles() {
+// Helper function to handle quotes in content for the onclick call
+function escapeQuotes(str) {
+    return str ? str.replace(/'/g, "\\'").replace(/"/g, '\\"') : '';
+}
+
+function viewFile(name, content) {
+    currentModalFile = { name, content };
+    document.getElementById('modalTitle').textContent = name;
+    document.getElementById('modalContent').textContent = content;
+    
+    const downloadBtn = document.getElementById('modalDownloadBtn');
+    downloadBtn.onclick = () => downloadFile(name, content);
+    
+    document.getElementById('viewModal').style.display = 'block';
+}
+
+function downloadFile(name, content) {
+    // Create a Blob (file-like object) with the content
+    const blob = new Blob([content], { type: 'text/plain' });
+    // Create a temporary URL for the Blob
+    const url = window.URL.createObjectURL(blob);
+    // Create a temporary invisible link element and click it to trigger download
+    const a = document.createElement('a');
+    a.href = url;
+    a.download = name; // The name of the downloaded file
+    document.body.appendChild(a);
+    a.click();
+    // Clean up
+    window.URL.revokeObjectURL(url);
+    document.body.removeChild(a);
+}
+
+function filterFiles() {
     const query = document.getElementById('searchInput').value.toLowerCase();
-    if (query === '') {
+    if (!query) {
         renderFileList(allFiles);
         return;
     }
     const filteredFiles = allFiles.filter(file =>
-        file.name.toLowerCase().includes(query)
+        file.FileName.toLowerCase().includes(query) ||
+        (file.Description && file.Description.toLowerCase().includes(query)) ||
+        (file.Content && file.Content.toLowerCase().includes(query)) // Search content too!
     );
     renderFileList(filteredFiles);
 }
 
-// --- Editing Logic ---
-function startEditContent(fileId) {
-    showStatus('Loading file content...', 'saving');
-    // 1. Call YOUR backend to get the file's content
-    fetch(`http://your-backend.com/get-file/${fileId}`)
-        .then(response => response.text())
-        .then(content => {
-            // 2. Populate the modal
-            currentlyEditingFileId = fileId;
-            document.getElementById('editingFileName').textContent = allFiles.find(f => f.id === fileId).name;
-            document.getElementById('fileContentEditor').value = content;
-            // 3. Show the modal
-            document.getElementById('editModal').style.display = 'block';
-            hideStatus();
-        });
-}
-
-async function saveFileContent() {
-    if (!currentlyEditingFileId) return;
-
-    const newContent = document.getElementById('fileContentEditor').value;
-    showStatus('Saving...', 'saving');
-
-    try {
-        // Call YOUR backend to save the content
-        await fetch(`http://your-backend.com/save-file/${currentlyEditingFileId}`, {
-            method: 'POST',
-            headers: { 'Content-Type': 'application/json' },
-            body: JSON.stringify({ content: newContent })
-        });
-        showStatus('Changes saved successfully!', 'saved');
-        setTimeout(() => {
-            closeModal();
-            loadFiles(); // Reload the list to get updated modifiedTime
-        }, 1000);
-    } catch (error) {
-        showStatus('Error saving file.', 'error');
-    }
-}
-
 function closeModal() {
-    document.getElementById('editModal').style.display = 'none';
-    currentlyEditingFileId = null;
+    document.getElementById('viewModal').style.display = 'none';
 }
 
-function showStatus(message, type) {
-    const statusBar = document.getElementById('statusBar');
-    statusBar.textContent = message;
-    statusBar.className = type;
-    statusBar.style.display = 'block';
-}
-function hideStatus() { document.getElementById('statusBar').style.display = 'none'; }
+// Helper functions to show/hide UI states
+function showLoading(show) { ... }
+function showError() { ... }
+function hideError() { ... }
 
-
-// Initialize the app
-loadFiles();
+// Load the data when the page starts
+loadSheetData();
