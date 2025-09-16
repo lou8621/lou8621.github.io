@@ -1,5 +1,5 @@
 // CONFIG: Paste your published Google Sheets CSV link here
-const SHEET_CSV_URL = 'https://docs.google.com/spreadsheets/d/e/YOUR_SHEET_ID/pub?output=csv';
+const SHEET_CSV_URL = 'https://docs.google.com/spreadsheets/d/e/2PACX-1vS6ysNauFIpHaRMi8QxVorCPsFhlORT8a0Pn9itl7Yz2HlUmmtxUbL7SXpuOc3OrKlMJJKE0nY1HhlS/pub?gid=0&single=true&output=csv';
 
 let allFiles = []; // This will hold all our data
 let currentModalFile = null; // Track which file is being viewed
